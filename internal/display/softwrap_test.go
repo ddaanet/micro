@@ -57,6 +57,23 @@ func assertRoundTrip(t *testing.T, w *BufWindow, lineLen int) {
 	}
 }
 
+// assertRoundTripLine is like assertRoundTrip but exercises an arbitrary
+// buffer line y, covering the multi-line path that assertRoundTrip's
+// line-0-only case doesn't reach.
+func assertRoundTripLine(t *testing.T, w *BufWindow, lineLen int, y int) {
+	t.Helper()
+	for x := 0; x <= lineLen; x++ {
+		loc := buffer.Loc{X: x, Y: y}
+		vloc := w.VLocFromLoc(loc)
+		got := w.LocFromVLoc(vloc)
+		assert.Equal(t, x, got.X,
+			"round-trip mismatch at column %d, line %d (vloc=%+v)", x, y, vloc)
+		assert.Equal(t, y, got.Y,
+			"round-trip mismatch: line drifted at column %d, "+
+				"line %d (vloc=%+v)", x, y, vloc)
+	}
+}
+
 func TestSoftWrapColumnRoundTrip(t *testing.T) {
 	line := strings.Repeat("A", 60)
 
@@ -92,4 +109,59 @@ func TestSoftWrapColumnRoundTrip(t *testing.T) {
 		w := newWrapTestWindow(tabby, 58, false, 4, 10)
 		assertRoundTrip(t, w, util.CharacterCount([]byte(tabby)))
 	})
+
+	t.Run("multi-line buffer round-trips on non-zero lines", func(t *testing.T) {
+		lineA := strings.Repeat("A", 60)
+		lineB := strings.Repeat("B", 45)
+		text := lineA + "\n" + lineB
+		w := newWrapTestWindow(text, 58, false, 4, 20)
+		assertRoundTripLine(t, w, len(lineA), 0)
+		assertRoundTripLine(t, w, len(lineB), 1)
+	})
+
+	t.Run("non-zero gutter (ruler on) round-trips", func(t *testing.T) {
+		// Mirrors newWrapTestWindow's construction, but with ruler enabled
+		// so gutterOffset is non-zero and bufWidth < paneWidth.
+		buf := buffer.NewBufferFromString(line, "", buffer.BTDefault)
+		buf.Settings["softwrap"] = true
+		buf.Settings["wordwrap"] = false
+		buf.Settings["tabsize"] = float64(4)
+		buf.Settings["softwrapcolumn"] = float64(20)
+		buf.Settings["ruler"] = true
+		buf.Settings["diffgutter"] = false
+		buf.Settings["scrollbar"] = false
+
+		w := NewBufWindow(0, 0, 58, 10, buf)
+		w.updateDisplayInfo()
+
+		assert.NotEqual(t, 0, w.gutterOffset,
+			"expected ruler to produce a non-zero gutter")
+		assertRoundTrip(t, w, len(line))
+	})
+}
+
+// TestSoftWrapColumnRelocation confirms that changing softwrapcolumn on a
+// live buffer via Buf.SetOption (the same path the `set` command uses)
+// triggers a re-wrap. BufWindow.SetBuffer registers an OptionCallback that,
+// for "softwrapcolumn", calls updateDisplayInfo() (which recomputes
+// wrapWidth) and Relocate(). This pins that a runtime option change actually
+// reflows text, not just a freshly constructed window.
+func TestSoftWrapColumnRelocation(t *testing.T) {
+	line := strings.Repeat("A", 60)
+	w := newWrapTestWindow(line, 58, false, 4, 0)
+
+	loc := buffer.Loc{X: 40, Y: 0}
+	rowBefore := w.VLocFromLoc(loc).Row
+	assert.Equal(t, 0, rowBefore,
+		"with softwrapcolumn off, column 40 should stay on row 0 "+
+			"within a 58-wide pane")
+
+	err := w.Buf.SetOption("softwrapcolumn", "20")
+	assert.NoError(t, err)
+
+	rowAfter := w.VLocFromLoc(loc).Row
+	assert.NotEqual(t, rowBefore, rowAfter,
+		"changing softwrapcolumn at runtime should trigger a re-wrap")
+	assert.Equal(t, 2, rowAfter,
+		"column 40 should now be on row 2 (wrapping every 20 columns)")
 }
