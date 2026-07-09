@@ -1,0 +1,45 @@
+# cursorline defaults to true globally; it is disabled here so the
+# cursor-line highlight on the cursor's line does not paint the whole row
+# and obscure the single color-column cell.
+win 36x10@2,1
+set colorcolumn 20
+set cursorline false
+set diffgutter false
+set ruler false
+set scrollbar false
+set softwrap true
+style
+-- text --
+abcdefghijklmnopqrstuvwxyzabcdefghijklmn
+-- want --
+ 0000000000111111111122222222223333333333 
+ 0123456789012345678901234567890123456789 
+|                                        |
+|  abcdefghijklmnopqrstuvwxyzabcdefghij  |
+|  klmn                                  |
+|                                        |
+|                                        |
+|                                        |
+|                                        |
+|                                        |
+|                                        |
+|                                        |
+|  No name (1,1) | ft:unknown | unix |   |
+|                                        |
+
+# styles
+|                                        |
+|                      A                 |
+|                      A                 |
+|                                        |
+|                                        |
+|                                        |
+|                                        |
+|                                        |
+|                                        |
+|                                        |
+|  BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB  |
+|                                        |
+
+A: fg=default bg=#ff0000 attrs=0x0
+B: fg=default bg=default attrs=0x4

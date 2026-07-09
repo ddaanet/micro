@@ -1,0 +1,44 @@
+win 36x10@2,1
+set cursorline true
+set diffgutter false
+set ruler false
+set scrollbar false
+set softwrap true
+cursor 0,1
+style
+-- text --
+one
+two
+three
+-- want --
+ 0000000000111111111122222222223333333333 
+ 0123456789012345678901234567890123456789 
+|                                        |
+|  one                                   |
+|  two                                   |
+|  three                                 |
+|                                        |
+|                                        |
+|                                        |
+|                                        |
+|                                        |
+|                                        |
+|  No name (2,1) | ft:unknown | unix |   |
+|                                        |
+
+# styles
+|                                        |
+|                                        |
+|  AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA  |
+|                                        |
+|                                        |
+|                                        |
+|                                        |
+|                                        |
+|                                        |
+|                                        |
+|  BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB  |
+|                                        |
+
+A: fg=default bg=#0000ff attrs=0x0
+B: fg=default bg=default attrs=0x4
