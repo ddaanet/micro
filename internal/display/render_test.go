@@ -430,3 +430,89 @@ func TestRender(t *testing.T) {
 		})
 	}
 }
+
+// TestRenderDeadZoneStale proves that the softwrapcolumn dead-zone fill
+// actively blanks stale cells rather than relying on an already-blank
+// screen. A single render can't show this: a freshly cleared screen is
+// blank in every cell, so the dead zone reads blank whether or not the
+// fill loop runs. To force the two cases apart, this renders buffer A --
+// which wraps at the full pane width, so its rows carry real, non-blank
+// content across the columns that become buffer B's dead zone -- then
+// swaps in buffer B (softwrapcolumn=20) and renders again onto the same
+// screen with no intervening Clear. Correct code re-blanks B's dead zone
+// over buffer A's stale content; code that skips the fill leaves buffer
+// A's text showing through. Buffer A uses uppercase letters and buffer B
+// lowercase, so any bleed-through is unmistakable in the golden.
+//
+// The no-Clear sequence is safe in the real editor because
+// cmd/micro/micro.go fills the whole screen once per frame before any
+// pane draws; this test drops that step only to pin down the raw
+// two-render result byte for byte. The golden lives at testdata root (not
+// a group directory), so TestRender's testdata/*/*.golden glob skips it;
+// it is compared whole-file and rewritten by -update here.
+func TestRenderDeadZoneStale(t *testing.T) {
+	const winX, winY, winW, winH = 2, 1, 36, 10
+
+	screen.Screen.Clear()
+	screen.Screen.Sync()
+
+	// Buffer A wraps at the full pane width (no softwrapcolumn), so its
+	// content genuinely spans columns 0-35, including the range that
+	// becomes buffer B's dead zone. Each line is a distinct 40-character
+	// slice of one continuous uppercase alphabet cycle, so a stale row is
+	// identifiable by its glyphs.
+	settingsA := map[string]interface{}{
+		"softwrap":   true,
+		"ruler":      false,
+		"diffgutter": false,
+		"scrollbar":  false,
+	}
+	textA := strings.Join([]string{
+		"ABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMN",
+		"OPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZAB",
+		"CDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOP",
+	}, "\n")
+	bufA := buffer.NewBufferFromString(textA, "", buffer.BTDefault)
+	for k, v := range settingsA {
+		bufA.Settings[k] = v
+	}
+	w := NewBufWindow(winX, winY, winW, winH, bufA)
+	w.Display()
+
+	// Buffer B narrows to softwrapcolumn=20, leaving a dead zone in
+	// columns 20-35. Its 25 lowercase characters wrap once, so row 0
+	// exercises the intermediate wrap-row dead-zone fill, not only the
+	// trailing per-line fill.
+	settingsB := map[string]interface{}{
+		"softwrap":       true,
+		"softwrapcolumn": float64(20),
+		"ruler":          false,
+		"diffgutter":     false,
+		"scrollbar":      false,
+	}
+	bufB := buffer.NewBufferFromString(
+		"abcdefghijklmnopqrstuvwxy", "", buffer.BTDefault)
+	for k, v := range settingsB {
+		bufB.Settings[k] = v
+	}
+	w.SetBuffer(bufB)
+
+	// Deliberately no screen.Screen.Clear() here: that is the point of
+	// this test.
+	w.Display()
+
+	got := serializeScreen(t, sim, false)
+
+	const goldenPath = "testdata/swc_dead_zone_stale.golden"
+	if *update {
+		if err := os.WriteFile(goldenPath, []byte(got), 0644); err != nil {
+			t.Fatal(err)
+		}
+		return
+	}
+	want, err := os.ReadFile(goldenPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(t, string(want), got)
+}

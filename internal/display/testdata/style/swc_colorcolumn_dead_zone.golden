@@ -1,0 +1,51 @@
+# The color-column highlight must be drawn inside the dead zone (columns
+# 20-35) by fillStyle's "x - gutterOffset + StartCol" term. With
+# colorcolumn=30 and startcol=5, the highlighted screen column is
+# 30 - 5 + 0 = 25, which lands inside the dead zone (20-35), not the
+# wrapped content region (0-19), so this exercises the dead-zone
+# highlighting path. The style grid marks column 25 on every wrapped
+# row.
+win 36x10@2,1
+set colorcolumn 30
+set cursorline false
+set diffgutter false
+set ruler false
+set scrollbar false
+set softwrap true
+set softwrapcolumn 20
+startcol 5
+style
+-- text --
+abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefgh
+-- want --
+ 0000000000111111111122222222223333333333 
+ 0123456789012345678901234567890123456789 
+|                                        |
+|  fghijklmnopqrstuvwxy                  |
+|  zabcdefghijklmnopqrs                  |
+|  tuvwxyzabcdefgh                       |
+|                                        |
+|                                        |
+|                                        |
+|                                        |
+|                                        |
+|                                        |
+|  No name (1,1) | ft:unknown | unix |   |
+|                                        |
+
+# styles
+|                                        |
+|                           A            |
+|                           A            |
+|                           A            |
+|                                        |
+|                                        |
+|                                        |
+|                                        |
+|                                        |
+|                                        |
+|  BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB  |
+|                                        |
+
+A: fg=default bg=#ff0000 attrs=0x0
+B: fg=default bg=default attrs=0x4
