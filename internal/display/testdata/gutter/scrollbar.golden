@@ -1,0 +1,36 @@
+win 36x10@2,1
+set diffgutter false
+set ruler false
+set scrollbar true
+set softwrap true
+-- text --
+abcd
+efgh
+ijkl
+mnop
+qrst
+uvwx
+yzab
+cdef
+ghij
+klmn
+opqr
+stuv
+wxyz
+abcd
+efgh
+-- want --
+ 0000000000111111111122222222223333333333 
+ 0123456789012345678901234567890123456789 
+|                                        |
+|  abcd                               |  |
+|  efgh                               |  |
+|  ijkl                               |  |
+|  mnop                               |  |
+|  qrst                               |  |
+|  uvwx                               |  |
+|  yzab                                  |
+|  cdef                                  |
+|  ghij                                  |
+|  No name (1,1) | ft:unknown | unix |   |
+|                                        |
