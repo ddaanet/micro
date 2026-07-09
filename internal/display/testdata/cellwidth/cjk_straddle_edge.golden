@@ -1,0 +1,29 @@
+# The 35-character ASCII run fills every column of the wrap width but
+# the pane's last one (35 of 36 cells). The next rune is double-width and
+# needs two cells; it cannot be split across the wrap, so it wraps whole
+# to the following visual row and the pane's final column stays blank.
+# That trailing blank cell is the assertion (in the rune grid below, a
+# wide glyph's shadow cell is omitted, so the row's trailing run of blank
+# characters is one column shorter than the blank cells it represents).
+win 36x10@2,1
+set diffgutter false
+set ruler false
+set scrollbar false
+set softwrap true
+-- text --
+abcdefghijklmnopqrstuvwxyzabcdefghi一二三四五六七八九十百
+-- want --
+ 0000000000111111111122222222223333333333 
+ 0123456789012345678901234567890123456789 
+|                                        |
+|  abcdefghijklmnopqrstuvwxyzabcdefghi   |
+|  一二三四五六七八九十百                |
+|                                        |
+|                                        |
+|                                        |
+|                                        |
+|                                        |
+|                                        |
+|                                        |
+|  No name (1,1) | ft:unknown | unix |   |
+|                                        |
