@@ -239,7 +239,7 @@ func Init() error {
 }
 
 // InitSimScreen initializes a simulation screen for testing purposes
-func InitSimScreen() (tcell.SimulationScreen, error) {
+func InitSimScreen(width, height int) (tcell.SimulationScreen, error) {
 	drawChan = make(chan bool, 8)
 
 	// Initilize tcell
@@ -252,7 +252,7 @@ func InitSimScreen() (tcell.SimulationScreen, error) {
 		return nil, err
 	}
 
-	s.SetSize(80, 24)
+	s.SetSize(width, height)
 	Screen = s
 
 	if config.GetGlobalOption("mouse").(bool) {

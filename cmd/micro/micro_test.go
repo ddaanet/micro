@@ -47,7 +47,7 @@ func startup(args []string) (tcell.SimulationScreen, error) {
 		return nil, err
 	}
 
-	s, err := screen.InitSimScreen()
+	s, err := screen.InitSimScreen(80, 24)
 	if err != nil {
 		return nil, err
 	}
