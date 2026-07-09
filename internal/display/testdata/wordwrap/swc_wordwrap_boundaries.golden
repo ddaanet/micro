@@ -1,0 +1,30 @@
+# Word-boundary breaks before column 20. The 25-character word is
+# wider than wrapWidth (20) but narrower than bufWidth (36), so it
+# distinguishes the two thresholds: wrapping at wrapWidth splits it
+# across rows once its accumulated width reaches 20, whereas wrapping at
+# bufWidth would collect it whole. The surrounding short words still
+# wrap cleanly at word boundaries.
+win 36x10@2,1
+set diffgutter false
+set ruler false
+set scrollbar false
+set softwrap true
+set softwrapcolumn 20
+set wordwrap true
+-- text --
+the quick brown abcdefghijklmnopqrstuvwxy jumps over the lazy dog again and again
+-- want --
+ 0000000000111111111122222222223333333333 
+ 0123456789012345678901234567890123456789 
+|                                        |
+|  the quick brown                       |
+|  abcdefghijklmnopqrst                  |
+|  uvwxy jumps over                      |
+|  the lazy dog again                    |
+|  and again                             |
+|                                        |
+|                                        |
+|                                        |
+|                                        |
+|  No name (1,1) | ft:unknown | unix |   |
+|                                        |
